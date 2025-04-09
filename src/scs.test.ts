@@ -1,4 +1,4 @@
-import {scs, scsTwoWords, validate} from "./scs.ts";
+import {scs, scsLcsMethod, validate} from "./scs.ts";
 import { test, describe } from "node:test";
 import assert from 'node:assert/strict';
 import {randomWord, shuffle} from "./util/util.ts";
@@ -157,7 +157,7 @@ test('generate new ab tests', () => {
 
     const genTestCase = (a: string, b: string) => {
         const scsv = validatedScs([a, b]);
-        const scss = scsTwoWords(a, b);
+        const scss = scsLcsMethod(a, b);
 
         if(scsv.length !== scss.length) {
             console.log(`test('${a}-${b}', () => { assertScsWithExample(["${a}", "${b}"], "${scss}") });`);
