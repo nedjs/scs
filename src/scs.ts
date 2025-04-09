@@ -20,7 +20,7 @@ class Link {
     readonly d_l;
     readonly a: C;
     readonly b: C;
-    readonly exclusiveWith: CustomSet<Link> = new CustomSet();
+    exclusiveWith: CustomSet<Link> = new CustomSet();
 
     constructor(a: C, b: C) {
         if (a.word === b.word) {
@@ -105,6 +105,7 @@ class Linking {
         }
         this.words.push(buff);
         this.wordsDict[word] = buff;
+        this.wordLinks[word] = this.wordLinks[word] || {};
     }
 
     private add(a: C) {
@@ -121,89 +122,38 @@ class Linking {
             this.wordLinks[a.word] = this.wordLinks[a.word] || {};
             this.wordLinks[a.word][b.word] = this.wordLinks[a.word][b.word] || new CustomSet();
             this.wordLinks[a.word][b.word].add(link)
-            // this.wordLinks[a.word][b.word].sort((aL, bL) => aL.indexRel(b.word) - bL.indexRel(b.word));
 
             this.wordLinks[b.word] = this.wordLinks[b.word] || {};
             this.wordLinks[b.word][a.word] = this.wordLinks[b.word][a.word] || new CustomSet();
             this.wordLinks[b.word][a.word].add(link)
-            // this.wordLinks[b.word][a.word].sort((aL, bL) => aL.indexRel(a.word) - bL.indexRel(a.word));
         }
 
     }
 }
 
 function findBestLinkSet(linking: Linking) {
-    const searchedPerms = new CustomSet<string>();
-
-    const recSearch = (link: Link | null, availableLinks: CustomSet<Link>, chosenLinks: CustomSet<Link>, bestSize: number) => {
-
-        if(link) {
-            chosenLinks.add(link);
-            availableLinks.delete(link);
-            availableLinks.deleteAll(link.exclusiveWith);
-        }
-
-        if(chosenLinks.size) {
-            const id = chosenLinks.map(v => v.id).toArray().sort().join(' ');
-
-            if(bestSize > availableLinks.size + chosenLinks.size) {
-                return chosenLinks;
-            }
-            if(searchedPerms.has(id)) {
-                return chosenLinks;
-            }
-            searchedPerms.add(id);
-
-        }
-
-        let best = chosenLinks;
-
-        for(const v of availableLinks) {
-            const result = recSearch(v, availableLinks, chosenLinks, best.size);
-
-            if(result.size > best.size) {
-                best = result;
-            }
-        }
-
-        return best;
-    }
-
     const final = new CustomSet<Link>();
-    const groups = linking.links.groupBy(v => v.a.word + ' ' + v.b.word);
-    for(const [key, group] of groups.entries()) {
-        const best = recSearch(null, group, new CustomSet<Link>(), 0);
-        final.addAll(best);
+    const words = linking.words
+    for(let i=0;i<words.length;i++) {
+        for(let j=i+1;j<words.length;j++) {
+            let wordA = words[i], wordB = words[j];
+            const links = scsWalk(wordA[0].word, wordB[0].word, linking);
+            if(links != null) {
+                final.addAll(links);
+            }
+        }
     }
     return final;
 }
 
 
 function scoreLinks(linking: Linking) {
-    const reScoreLinks = () => {
-        for (const link of linking.links) {
-            let exclusiveLinks = linking.wordLinks[link.a.word][link.b.word]
-                .filter(v =>
-                    (v.indexRel(link.a.word) == link.a.index || v.indexRel(link.b.word) == link.b.index ||
-                    (v.indexRel(link.b.word) < link.b.index) !== (v.indexRel(link.a.word) < link.a.index))
-                );
-
-            link.exclusiveWith.clear();
-            link.exclusiveWith.addAll(exclusiveLinks);
-        }
-
-        return void 0;
-    }
-
-    reScoreLinks();
-
     const bestLinks = findBestLinkSet(linking)
     for(let link of linking.links) {
         if(!bestLinks.has(link)) {
             linking.removeLink(link);
         }
     }
-    reScoreLinks();
 
     return void 0;
 }
@@ -320,6 +270,58 @@ function scs(words: string[], options: {
 
     options.profile && console.timeEnd('total');
     return result;
+}
+
+function scsWalk(str1: string, str2: string, linking: Linking) {
+
+    let n = str1.length, m = str2.length;
+    let dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
+
+    for (let i = n - 1; i >= 0; i--) {
+        for (let j = m - 1; j >= 0; j--) {
+            if (str1[i] === str2[j]) {
+                dp[i][j] = 1 + dp[i + 1][j + 1];
+            } else {
+                dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+            }
+        }
+    }
+
+    let x = 0, y = 0;
+    let lcs = "";
+    while (x < n && y < m) {
+        if (str1[x] === str2[y]) {
+            lcs += str1[x];
+            x++;
+            y++;
+        } else if (dp[x + 1][y] >= dp[x][y + 1]) {
+            x++;
+        } else {
+            y++;
+        }
+    }
+
+    const usedLinks = new CustomSet<Link>();
+    const relevantLinks = linking.wordLinks[str1][str2] || [];
+    let result = "";
+    x = 0;
+    y = 0;
+    for (let c of lcs) {
+        while (x < n && str1[x] !== c) result += str1[x++];
+        while (y < m && str2[y] !== c) result += str2[y++];
+
+        const linkFound = relevantLinks.find(v =>
+            v.sideForWord(str1).index === x &&
+            v.sideForWord(str2).index === y
+        );
+        if(linkFound) {
+            usedLinks.add(linkFound);
+        }
+        result += c;
+        x++;
+        y++;
+    }
+    return usedLinks;
 }
 
 function scsSingle(str1: string, str2: string) {

@@ -93,12 +93,21 @@ test('bbbaaaba simplified', () => {
 
 
 describe('l33t cases', () => {
-
     test('29/50', () => { assertScsWithExample([
             "bcaaacbbbcbdcaddadcacbdddcdcccdadadcbabaccbccdcdcbcaccacbbdcbabb",
             "dddbbdcbccaccbababaacbcbacdddcdabadcacddbacadabdabcdbaaabaccbdaa"
         ],
-        "bcaaacbbbcbdcaddadcacbdddcdcccdadadcbabaccbccdcdcbcaccacbbdcbabbdddbbdcbccaccbababaacbcbacdddcdabadcacddbacadabdabcdbaaabaccbdaa")
+        "dddbbdcbccaaaccbababaacbdcbacddadcdacbadddcacdcccdbadcadcbabdaccbccdcdcbcaaabaccacbbdcbabba", {
+            profile: true,
+        })
+    });
+    test('47/50', () => { assertScsWithExample([
+            "atdznrqfwlfbcqkezrltzyeqvqemikzgghxkzenhtapwrmrovwtpzzsyiwongllqmvptwammerobtgmkpowndejvbuwbporfyroknrjoekdgqqlgzxiisweeegxajqlradgcciavbpgqjzwtdetmtallzyukdztoxysggrqkliixnagwzmassthjecvfzmyonglocmvjnxkcwqqvgrzpsswnigjthtkuawirecfuzrbifgwolpnhcapzxwmfhvpfmqapdxgmddsdlhteugqoyepbztspgojbrmpjmwmhnldunskpvwprzrudbmtwdvgyghgprqcdgqjjbyfsujnnssfqvjhnvcotynidziswpzhkdszbblustoxwtlhkowpatbypvkmajumsxqqunlxxvfezayrolwezfzfyzmmneepwshpemynwzyunsxgjflnqmfghsvwpknqhclhrlmnrljwabwpxomwhuhffpfinhnairblcayygghzqmotwrywqayvvgohmujneqlzurxcpnwdipldofyvfdurbsoxdurlofkqnrjomszjimrxbqzyazakkizojwkuzcacnbdifesoiesmkbyffcxhqgqyhwyubtsrqarqagogrnaxuzyggknksrfdrmnoxrctntngdxxechxrsbyhtlbmzgmcqopyixdomhnmvnsafphpkdgndcscbwyhueytaeodlhlzczmpqqmnilliydwtxtpedbncvsqauopbvygqdtcwehffagxmyoalogetacehnbfxlqhklvxfzmrjqofaesvuzfczeuqegwpcmahhpzodsmpvrvkzxxtsdsxwixiraphjlqawxinlwfspdlscdswtgjpoiixbvmpzilxrnpdvigpccnngxmlzoentslzyjjpkxemyiemoluhqifyonbnizcjrlmuylezdkkztcphlmwhnkdguhelqzjgvjtrzofmtpuhifoqnokonhqtzxmimp",
+            "xjtuwbmvsdeogmnzorndhmjoqnqjnhmfueifqwleggctttilmfokpgotfykyzdhfafiervrsyuiseumzmymtvsdsowmovagekhevyqhifwevpepgmyhnagjtsciaecswebcuvxoavfgejqrxuvnhvkmolclecqsnsrjmxyokbkesaugbydfsupuqanetgunlqmundxvduqmzidatemaqmzzzfjpgmhyoktbdgpgbmjkhmfjtsxjqbfspedhzrxavhngtnuykpapwluameeqlutkyzyeffmqdsjyklmrxtioawcrvmsthbebdqqrpphncthosljfaeidboyekxezqtzlizqcvvxehrcskstshupglzgmbretpyehtavxegmbtznhpbczdjlzibnouxlxkeiedzoohoxhnhzqqaxdwetyudhyqvdhrggrszqeqkqqnunxqyyagyoptfkolieayokryidtctemtesuhbzczzvhlbbhnufjjocporuzuevofbuevuxhgexmckifntngaohfwqdakyobcooubdvypxjjxeugzdmapyamuwqtnqspsznyszhwqdqjxsmhdlkwkvlkdbjngvdmhvbllqqlcemkqxxdlldcfthjdqkyjrrjqqqpnmmelrwhtyugieuppqqtwychtpjmloxsckhzyitomjzypisxzztdwxhddvtv"
+        ],
+        "axjtuwbmvsdzeogmnzorndhmjoqnqjnhmfwlueifbcqkezrwltzyeqvqemggctttilmfokzpgghxotfykyzendhtfapwfiermrovwtpzzrsyuiwongllqseumvpzmymtvsdsowammerobtvagmekpowndhejvbuwbporfyroknrjoekdgqqlgzxhiisfwevpeepgxmyhnajqlradgjtscciavbpgqjzecswtdetmtallzybcukdztovxysoavfggrejqkliirxuvnagwzmassthjecvfzkmyonglocmvjnxklecwqqvgrzpsswnigsrjthtmxyokuawirbkecfsauzrbifgwolpnhcapzxwmbydfhvsupfmuqapdxnetgunlqmundxvdsuqmzidlhateugmaqoyepbmztspgozzfjbrmpjgmwmhnldunsyokpvwprzrudbmtwbdvgyghgprqcdgqjjbyfsumjnnsskhmfqvjhnvcotynidziswxjqbfspzhkedshzbblustorxwtlhkowpavhngtbnuypvkmpajpwluamsxeeqqunlxxvfeutkyzayrolwezfzfyzmmneepwshpemynwzyunsxgjflnqmfghdsvwpjyknqhclhrlmnrljwabwpxtiomawcrvmsthuhffbebdqqrpfinphncthosljfaeirdblcaoyygghekxezqmotwrywzlizqaycvvgoxehmrcskstshujneqpglzugmbrxcetpnwdipldofyehtavfdurbsoxdurlofkqnrjoegmsbtzjimrxnhpbqczyadjlzakkizbnojwkuzcacnbdifxlxkesoiesmkbyffcdzoohoxhnhzqgqyhaxdwetyubtsrdhyqavdhrqagogrszqeqkqqnaxuznxqyyaggyoptfknolieayoksrfyidrmnoxrtctnemtngdxxechxrsbyuhtlbmzgmcqopyixdomhnmzzvnsafphpkdgndcsclbwybhnueytaefjjodlhlzczmpqqmnilliydwtxtporuzuedbncvsqauopfbvygqdtcwuevuxhffagexmyoalogeckifntngaceohnbfxlwqhdaklyobcooubdvypxfzmrjqofajxesvuzfczeuqegwpcmahhpzodsmpvrvkzxxtsdsxwixiraphjlqyamuwxiqtnlwfqspdlscdznyszhwtgqdqjpoiixbvsmpzilxrnphdlkwkvigpcclkdbjnngxvdmhvblzolqqlcentsmkqxxdlzldcfthjdqkyjrrjqqqpkxenmmelrwhtyugiemoluhppqifqtwyonbnizchtpjrlmuylezdkkztoxscphlmwhnkdguhelqzjgvjyitrzofmtjzypuhifoqnokonhqtsxzztdwxmimphddvtv", {
+            profile: true,
+        })
     });
 });
 
@@ -171,7 +180,6 @@ function assertScsWithExample(words: string[], exampleOutput: string, options: {
     debug?: boolean;
     profile?: boolean;
 } = {}) {
-    assert.equal(validate(exampleOutput, words).valid, true, `Invalid test case, example output ${exampleOutput} for words ${words} is not valid`);
     const result = validatedScs(words, options);
     if(result.length !== exampleOutput.length) {
         console.log('Invalid', result);
@@ -181,6 +189,7 @@ function assertScsWithExample(words: string[], exampleOutput: string, options: {
             `\nactual:   '${result}' of length ${result.length}`
         );
     }
+    assert.equal(validate(exampleOutput, words).valid, true, `Invalid test case, example output ${exampleOutput} for words ${words} is not valid`);
     return result;
 }
 
