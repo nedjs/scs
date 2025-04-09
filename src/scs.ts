@@ -16,24 +16,20 @@ class C {
 
 class Link {
     static idCounter = 0;
-    readonly id;
+    // prefixed with d_ to indiciate they are debug only props, i like keeping them around for debugging
+    readonly d_id;
     readonly d_l;
     readonly a: C;
     readonly b: C;
-    exclusiveWith: CustomSet<Link> = new CustomSet();
 
     constructor(a: C, b: C) {
         if (a.word === b.word) {
             throw new Error(`Invalid link between same word ${a.word}`);
         }
-        // this style of ID is very nice for debugging
-        if(DEBUG) {
-            this.id = `${Link.idCounter++}/${a.index}-${b.index}`;
-        } else {
-            this.id = String(Link.idCounter++);
-        }
         // only used in debugging
         if(DEBUG) {
+            // this style of ID is very nice for debugging
+            this.d_id = `${Link.idCounter++}/${a.index}-${b.index}`;
             this.d_l = a.value;
         }
         this.a = a;
@@ -63,12 +59,11 @@ class Link {
         }
         return '';
     }
-
-    sideForWord(word: string) {
+    opposingSide(word: string) {
         if (this.a.word === word) {
-            return this.a;
-        } else if (this.b.word === word) {
             return this.b;
+        } else if (this.b.word === word) {
+            return this.a;
         }
         throw new Error(`Invalid word for word '${word}' for '${this.a.word}' and '${this.b.word}'`);
     }
@@ -91,11 +86,9 @@ class Linking {
 
     addWord(word: string) {
         const buff = [new C(0, word)];
-        // this.add(buff[0]);
         for (let i = 1; i < word.length; i++) {
             const c = new C(i, word);
             buff.push(c);
-            // this.add(c);
         }
         this.words.push(buff);
         this.wordsDict[word] = buff;
@@ -109,7 +102,7 @@ function findBestLinkSet(linking: Linking) {
         for(let j=i+1;j<words.length;j++) {
             let wordA = words[i][0].word, wordB = words[j][0].word;
             if(wordA !== wordB) {
-                scsSingle(wordA, wordB, linking);
+                createLinksForLCS(wordA, wordB, linking);
             }
         }
     }
@@ -130,7 +123,6 @@ function walkLinks(linking: Linking, options: {
 
     const indices = {};
     const lookingAtLinks = new CustomSet<Link>();
-    const addedLinks = new CustomSet<Link>();
     const lookingAtWords = new CustomSet<string>();
 
     const walk = (letters: C[], toIndex: number, depth = 0) => {
@@ -158,14 +150,12 @@ function walkLinks(linking: Linking, options: {
                 .map(v => ({
                     link: v,
                     word: v.opposingWord(word),
-                    ix: v.sideForWord(v.opposingWord(word)).index,
+                    ix: v.opposingSide(word).index,
                 }))
                 .filter(v =>
                     !lookingAtWords.has(v.word) &&
                     !lookingAtLinks.find(l => l.isForWord(v.word) && l.indexRel(v.word) < indices[v.word])
                 )
-                // cant have 2 links to the same word
-                .distinctBy((v) => v.word)
 
             lookingAtLinks.addAll(walkableLinks.map(v => v.link));
             let leftBuf = '';
@@ -180,11 +170,10 @@ function walkLinks(linking: Linking, options: {
             }
             lookingAtLinks.deleteAll(walkableLinks.map(v => v.link));
 
-            if(leftBuf && walkableLinks.find(v => indices[v.word] > v.ix+1 && !addedLinks.has(v.link))) {
+            if(leftBuf && walkableLinks.find(v => indices[v.word] > v.ix+1)) {
                 debug && log('!', letter.value);
                 leftBuf = letter.value + leftBuf;
             }
-            addedLinks.addAll(letter.links);
 
             leftBuf += letter.value;
 
@@ -234,14 +223,8 @@ function scs(words: string[], options: {
     return result;
 }
 
-/**
- * Finds the shortest common superstring of two strings. This is a known method of doing it
- * for 2 strings, used for validating results from the generic scs case.
- *
- * If linking is provided it will add a link when a common letter is added to the result.
- */
-function scsSingle(str1: string, str2: string, linking?: Linking) {
 
+function prepareLCS(str1: string, str2: string) {
     let n = str1.length, m = str2.length;
     let dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
 
@@ -269,16 +252,42 @@ function scsSingle(str1: string, str2: string, linking?: Linking) {
         }
     }
 
+    return {
+        lcs,
+        n,
+        m,
+    }
+}
+
+/**
+ * walks the longest common supersequence of two strings and creates links between the letters, putting them into linking
+ */
+function createLinksForLCS(str1: string, str2: string, linking: Linking) {
+    const {lcs, n, m} = prepareLCS(str1, str2);
+    let x = 0;
+    let y = 0;
+    for (let c of lcs) {
+        while (x < n && str1[x] !== c) x++;
+        while (y < m && str2[y] !== c) y++;
+
+        linking.addLink(new Link(linking.wordsDict[str1][x], linking.wordsDict[str2][y]));
+        x++;
+        y++;
+    }
+}
+
+/**
+ * Finds the shortest common supersequence of two strings. This is a known method of doing it
+ * for 2 strings, used for validating results from the generic scs case.
+ */
+function scsTwoWords(str1: string, str2: string) {
+    const {lcs, n, m} = prepareLCS(str1, str2);
     let result = "";
-    x = 0;
-    y = 0;
+    let x = 0;
+    let y = 0;
     for (let c of lcs) {
         while (x < n && str1[x] !== c) result += str1[x++];
         while (y < m && str2[y] !== c) result += str2[y++];
-
-        if(linking) {
-            linking.addLink(new Link(linking.wordsDict[str1][x], linking.wordsDict[str2][y]))
-        }
 
         result += c;
         x++;
@@ -324,6 +333,6 @@ function validate(value: string, words: string[]): {
 
 export {
     scs,
-    scsSingle,
+    scsTwoWords,
     validate,
 }

@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node --test src/scs.test.ts",
-    "build": "npm run build-browser && npm run build-node",
-    "build-browser": "esbuild src/browser.ts --bundle --platform=browser --target=node20 --outfile=dist/scs_browser.js",
-    "build-node": "esbuild src/scs.ts --bundle --platform=node --target=node20 --outfile=dist/scs.js"
+    "build": "tsc -p . && node build.js"
   },
   "engines": {
     "node": ">=23.0.0"
