@@ -1,4 +1,5 @@
 
+/** @internal */
 function prepareLCS(str1: string, str2: string) {
     let n = str1.length, m = str2.length;
     let dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
@@ -37,6 +38,7 @@ function prepareLCS(str1: string, str2: string) {
 /**
  * Finds the shortest common supersequence of two strings. This is a known method of doing it
  * for 2 strings, used for validating results from the generic scs case.
+ * @internal
  */
 function scsLcsMethod(str1: string, str2: string) {
     const {lcs, n, m} = prepareLCS(str1, str2);

@@ -2,7 +2,18 @@
   "name": "scs",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "module": "./dist/esm/scs.js",
+  "main": "./dist/cjs/scs.js",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/scs.js",
+      "require": "./dist/cjs/scs.js"
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "types": "./dist/types/scs.d.ts",
   "scripts": {
     "test": "node --test src/scs.test.ts",
     "build": "tsc -p . && node build.js"

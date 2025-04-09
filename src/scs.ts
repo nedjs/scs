@@ -1,5 +1,6 @@
 import {prepareLCS} from "./lcs.ts";
 
+/** @internal */
 class C {
     readonly index: number;
     readonly word: string;
@@ -16,7 +17,9 @@ class C {
 class Link {
     static idCounter = 0;
     // prefixed with d_ to indiciate they are debug only props, i like keeping them around for debugging
+    /** @internal */
     readonly d_id;
+    /** @internal */
     readonly d_l;
     readonly a: C;
     readonly b: C;
@@ -61,7 +64,9 @@ class Link {
 }
 
 class Linking {
+    /** @internal */
     words: C[][] = [];
+    /** @internal */
     wordsDict: Record<string, C[]> = {};
 
     addWord(word: string) {
@@ -70,19 +75,37 @@ class Linking {
             return false;
         }
 
-        const buff: C[] = [];
+        const wordChars: C[] = [];
         for(let i = 0; i < word.length; i++) {
-            buff.push(new C(i, word));
+            wordChars.push(new C(i, word));
         }
-
-        this.wordsDict[word] = buff;
 
         for(let existingWord of this.words) {
-            createLinksForLCS(existingWord[0].word, word, this);
+            this.createLinksForLCS(existingWord, wordChars);
         }
 
-        this.words.push(buff);
+        this.wordsDict[word] = wordChars;
+        this.words.push(wordChars);
+
         return true;
+    }
+
+
+    /**
+     * walks the longest common supersequence of two strings and creates links between the letters
+     * @internal
+     */
+    private createLinksForLCS(str1: C[], str2: C[]) {
+        const {lcs, n, m} = prepareLCS(str1[0].word, str2[0].word);
+        let x = 0, y = 0;
+        for (let c of lcs) {
+            while (x < n && str1[x].value !== c) x++;
+            while (y < m && str2[y].value !== c) y++;
+
+            new Link(str1[x], str2[y]);
+            x++;
+            y++;
+        }
     }
 }
 
@@ -98,7 +121,7 @@ function createLinks(words: string[]) {
 function walkLinks(linking: Linking, options: {
     debug?: boolean;
     profile?: boolean;
-}) {
+} = {}) {
     let {debug} = options;
 
     const indices = {};
@@ -215,23 +238,6 @@ function scs(words: string[], options: {
 
     options.profile && console.timeEnd('total');
     return result;
-}
-
-
-/**
- * walks the longest common supersequence of two strings and creates links between the letters, putting them into linking
- */
-function createLinksForLCS(str1: string, str2: string, linking: Linking) {
-    const {lcs, n, m} = prepareLCS(str1, str2);
-    let x = 0, y = 0;
-    for (let c of lcs) {
-        while (x < n && str1[x] !== c) x++;
-        while (y < m && str2[y] !== c) y++;
-
-        new Link(linking.wordsDict[str1][x], linking.wordsDict[str2][y]);
-        x++;
-        y++;
-    }
 }
 
 

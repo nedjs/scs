@@ -1,9 +1,13 @@
 {
   "extends": "@tsconfig/node20/tsconfig.json",
   "compilerOptions": {
-    "noEmit": true,
     "allowImportingTsExtensions": true,
     "lib": ["esnext", "DOM"],
-    "noImplicitAny": false
-  }
+    "noImplicitAny": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "stripInternal": true,
+    "outDir": "./dist/types",
+  },
+  "include": ["src/scs.ts"],
 }

@@ -1,4 +1,5 @@
 const esbuild = require('esbuild');
+const typescript = require('typescript');
 
 async function buildVariants(options) {
     await Promise.all([
@@ -40,7 +41,16 @@ async function buildVariants(options) {
         target: 'node20',
         format: 'esm',
         sourcemap: true,
-        outfile: 'scs',
+        outfile: 'esm/scs',
+    })
+    await buildVariants({
+        entryPoints: ['./src/scs.ts'],
+        bundle: true,
+        platform: 'node',
+        target: 'node20',
+        format: 'cjs',
+        sourcemap: true,
+        outfile: 'cjs/scs',
     })
     await buildVariants({
         entryPoints: ['./src/browser.ts'],
@@ -49,6 +59,6 @@ async function buildVariants(options) {
         target: 'node20',
         format: 'iife',
         sourcemap: true,
-        outfile: 'scs-browser',
+        outfile: 'browser/scs',
     })
 })();
