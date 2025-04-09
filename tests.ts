@@ -1,28 +1,45 @@
 import {scs, validate} from "./scs.ts";
 import { test } from "node:test";
 import assert from 'node:assert/strict';
+import {randomWord} from "./data.ts";
 
 test('profiling', () => {
     validatedScs(["jack", "apple", "maven", "hold", "solid", "mark", "moon", "poor", "spark", "live"], {
         profile: true,
     })
 })
+test('result', () => {
+    const values = ["jack", "apple", "maven", "hold", "solid", "mark", "moon", "poor", "spark", "live"];
+    values.sort();
+    const result = validatedScs(values, {
+        profile: true,
+    })
+    // jmspappholivedcorkn
+    // spmjhooarckpplivden
+    console.log(result)
+})
+
+test('debug', () => {
+    assert.equal(validatedScs(["mooon", "pooor"], {
+        debug: true,
+    }), 'mpooonr');
+})
 
 test('Basic combine cases', () => {
-    assert.equal('mpoonr', validatedScs(["moon", "poor"]));
-    assert.equal('mspoonark', validatedScs(["moon","spark","mark","poor"]));
-    assert.equal('mspoonark', validatedScs(["moon", "poor", "spark", "mark"]));
-    assert.equal('saparkple', validatedScs(["spark","apple"]));
+    assert.equal(validatedScs(["moon", "poor"]), 'mpoonr');
+    assert.equal(validatedScs(["moon","spark","mark","poor"]), 'mspoonark');
+    assert.equal(validatedScs(["moon", "poor", "spark", "mark"]), 'mspoonark');
+    assert.equal(validatedScs(["spark","apple"]), 'saparkple');
 })
 
 test('Repeat cases', () => {
-    assert.equal('aaaaa', validatedScs(["aaaa", "aaaaa", "aa"]));
-    assert.equal('bdaaa', validatedScs(["baaa", "daaa"]));
-    assert.equal('bcdaaaaa', validatedScs(["baaaaa", "caaaaa", "daaa"]));
-    assert.equal('bcaaaaa', validatedScs(["baaaaa", "caaaaa"]));
-    assert.equal('bcdaaa', validatedScs(["baaa", "caaa", "daa"]));
-    assert.equal('bcaaaa', validatedScs(["baaaa", "caaa"]));
-    assert.equal('aaaaa', validatedScs(["aaaa", "aaaaa", "aa"]))
+    assert.equal(validatedScs(["aaaa", "aaaaa", "aa"]), 'aaaaa');
+    assert.equal(validatedScs(["baaa", "daaa"]), 'bdaaa');
+    assert.equal(validatedScs(["baaaaa", "caaaaa", "daaa"]), 'bcdaaaaa');
+    assert.equal(validatedScs(["baaaaa", "caaaaa"]), 'bcaaaaa');
+    assert.equal(validatedScs(["baaa", "caaa", "daa"]), 'bcdaaa');
+    assert.equal(validatedScs(["baaaa", "caaa"]), 'bcaaaa');
+    assert.equal(validatedScs(["aaaa", "aaaaa", "aa"]), 'aaaaa')
 });
 
 test('really big repeat', () => {
@@ -40,15 +57,15 @@ test('really big repeat', () => {
 });
 
 test('SO cases', () => {
-    assert.equal('jmspachoorkpplivend', validatedScs(["jack", "apple", "maven", "hold", "solid", "mark", "moon", "poor", "spark", "live"]))
+    assert.equal(validatedScs(["jack", "apple", "maven", "hold", "solid", "mark", "moon", "poor", "spark", "live"]), 'jmspachoorkpplivend')
 });
 
 test('Words that share nothing in common', () => {
-    assert.equal('jackmournbelt', validatedScs(["jack", "mourn", "belt"]))
+    assert.equal(validatedScs(["jack", "mourn", "belt"]), 'jackmournbelt')
 });
 
 test('Words that share everything in common', () => {
-    assert.equal('maven', validatedScs(["maven", "maven", "maven"]))
+    assert.equal(validatedScs(["maven", "maven", "maven"]), 'maven')
 });
 
 test('permutations', () => {
@@ -65,6 +82,49 @@ test('permutations', () => {
     }
 });
 
+//
+// test('permutations random words', () => {
+//     // this test is kinda jank as it just does random variations but it is helpful for dev
+//     for(let i = 0; i < 500; i++) {
+//         const words = Array(5).fill(null).map(() => randomWord());
+//         validatedScs(words);
+//     }
+// });
+
+test('bbbaaaba', () => {
+    // bbabaaaabbba
+    console.log(validate("bbbabaababb", ["bbbaaaba", "bbababbb"]));
+    assert.equal(validatedScs(["bbbaaaba", "bbababbb"], {
+        debug: true
+    }), 'bbabaaabbba');
+});
+test('bbbaaaba simplified', () => {
+    /*
+    bbababb
+    bba ab a
+    bbababba
+     */
+    assert.equal(validate("bbababba", ["bbaaba", "bbababb"]).valid, true);
+    assert.equal(validatedScs(["bbaaba", "bbababb"], {
+        debug: true
+    }), 'bbababba');
+});
+
+test('baaacbcbaca', () => {
+    assert.equal(validate("baaacbcbaca", ["baaacbcbc", "bacbcaca"]).valid, true);
+    assert.equal(validatedScs(["baaacbcbc", "bacbcaca"], {
+        debug: true
+    }), 'baaacbcbaca');
+});
+
+test('cccabbabacaab', () => {
+    assert.equal(validate("cccabbabacaab", ["bbabacaa", "cccababab"]).valid, true);
+    assert.equal(validatedScs(["bbabacaa", "cccababab"], {
+        debug: true
+    }), 'cccabbabacaab');
+});
+
+
 /**
  * Runs scs and validates the result
  */
@@ -76,6 +136,8 @@ function validatedScs(words: string[], options: {
     const validation = validate(result, words);
     if(!validation.valid) {
         console.log('Invalid', result, validation.invalidWords);
+        console.log(JSON.stringify(words));
+        console.log(JSON.stringify(validation));
         assert.fail('Invalid scs result ' + result + ' ' + validation.invalidWords);
     }
     return result;
