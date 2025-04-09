@@ -43,7 +43,7 @@ describe('repeat cases', () => {
 });
 
 test('really big repeat', () => {
-    const len = 6;
+    const len = 100;
     assert.equal(
         Array(len).fill('a').join(''),
         validatedScs([
@@ -67,7 +67,7 @@ test('Words that share everything in common', () => {
     assert.equal(validatedScs(["maven", "maven", "maven"]), 'maven')
 });
 
-test('permutations', () => {
+test('permutations of SO case', () => {
     // this test is kinda jank as it just does random variations but its helpful to find bugs
     for(let i = 0; i < 5000; i++) {
         const words = shuffle(["maven","hold","moon","mark","jack","spark","poor","apple","solid","live"]);
@@ -77,8 +77,8 @@ test('permutations', () => {
 });
 
 test('permutations random words', () => {
-    // this test is kinda jank as it just does random variations but it is helpful for dev
-    for(let i = 0; i < 500; i++) {
+    // grab 5 random words and combine them, mostly for dev testing not testing anything specific
+    for(let i = 0; i < 5000; i++) {
         const words = Array(5).fill(null).map(() => randomWord());
         validatedScs(words);
     }
