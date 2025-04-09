@@ -1,8 +1,10 @@
+import {CustomSet} from "./CustomSet.ts";
+
 class C {
     readonly index: number;
     readonly word: string;
     readonly value: string;
-    readonly links: Set<Link> = new Set();
+    readonly links: CustomSet<Link> = new CustomSet();
 
     constructor(index: number, word: string) {
         this.index = index;
@@ -17,7 +19,7 @@ class Link {
     readonly b: C;
     score: number = Infinity;
     bestScoreInSet: number = Infinity;
-    readonly exclusiveWith: Set<Link> = new Set();
+    readonly exclusiveWith: CustomSet<Link> = new CustomSet();
 
     constructor(a: C, b: C) {
         if (a.word === b.word) {
@@ -76,8 +78,9 @@ class Linking {
         const buff = [new C(0, word)];
         this.add(buff[0]);
         for (let i = 1; i < word.length; i++) {
-            buff.push(new C(i, word));
-            this.add(buff[buff.length - 1]);
+            const c = new C(i, word);
+            buff.push(c);
+            this.add(c);
         }
         this.words.push(buff);
         this.wordsDict[word] = buff;
@@ -130,7 +133,7 @@ function scoreLinks(linking: Linking) {
         }
 
         link.bestScoreInSet = bestScore;
-        addAll(link.exclusiveWith, exclusiveLinks);
+        link.exclusiveWith.addAll(exclusiveLinks);
     }
 
     let updatedScores: boolean;
@@ -153,88 +156,82 @@ function scoreLinks(linking: Linking) {
     } while(updatedScores);
 }
 
-function walkLinks(linking: Linking, debug = false) {
+function walkLinks(linking: Linking, options: {
+    debug?: boolean;
+    profile?: boolean;
+}) {
+    const {debug} = options;
     const indices = {};
-    const lookingAtLinks = new Set<Link>();
-    const addedLinks = new Set<Link>();
-    const lookingAtWords = new Set<string>();
+    const lookingAtLinks = new CustomSet<Link>();
+    const addedLinks = new CustomSet<Link>();
+    const lookingAtWords = new CustomSet<string>();
 
-    const walk = (word: C[], toIndex: number, depth = 0) => {
-        lookingAtWords.add(word[0].word);
+    const walk = (letters: C[], toIndex: number, depth = 0) => {
+        const word = letters[0].word;
 
-        const ident = Array(depth).fill('|  ').join('');
-        const log = (...args) => {
-            if(debug) {
-                console.log(ident+args[0], ...args.slice(1));
-            }
+        const log = (symbol: string, ...args: any[]) => {
+            console.log(Array(depth).fill('|  ').join('')+symbol, ...args);
         }
 
-        const wordStr = word[0].word;
-
-        if(toIndex === indices[wordStr]) {
-            log('/', wordStr, 'to', (word[toIndex]?.value || '+'), indices[wordStr], '-', toIndex)
-            lookingAtWords.delete(word[0].word);
+        if(toIndex === indices[word]) {
+            debug && log('/', word, 'to', (letters[toIndex]?.value || '+'), indices[word], '-', toIndex)
             return '';
         }
 
-        log('>', wordStr, 'to', (word[toIndex]?.value || 'END'), indices[wordStr], '-', toIndex)
-        log('i', Object.entries(indices).map(v => `${v[0]}:${v[1]}`).join(', '));
-        let left = '';
-        for (; indices[wordStr] < toIndex; ) {
-            const letter = word[indices[wordStr]];
+        debug && log('>', word, 'to', (letters[toIndex]?.value || 'END'), indices[word], '-', toIndex)
+        debug && log('i', Object.entries(indices).map(v => `${v[0]}:${v[1]}`).join(', '));
 
-            const walkableLinks = [...letter.links]
-                .filter(v => v.bestScoreInSet === v.score)
+        lookingAtWords.add(word);
+
+        let left = '';
+        while(indices[word] < toIndex) {
+            const letter = letters[indices[word]];
+
+            const walkableLinks = letter.links
                 .map(v => ({
                     link: v,
-                    word: v.opposingWord(wordStr),
-                    ix: v.sideForWord(v.opposingWord(wordStr)).index,
+                    word: v.opposingWord(word),
+                    ix: v.sideForWord(v.opposingWord(word)).index,
                 }))
-                .filter(v => ![...lookingAtLinks].find(l =>
-                        (v.word === l.a.word || v.word === l.b.word) && l.indexRel(v.word) < indices[v.word]
+                .filter(v =>
+                    v.link.bestScoreInSet === v.link.score &&
+                    !lookingAtWords.has(v.word) &&
+                    !lookingAtLinks.find(l => (v.word === l.a.word || v.word === l.b.word) && l.indexRel(v.word) < indices[v.word]
                 ))
-                .filter(v => !lookingAtWords.has(v.word))
                 // cant have 2 links to the same word
-                .filter((v, i, a) =>
-                    a.findIndex(v2 => v.word === v2.word) === i
-                )
+                .distinctBy((v) => v.word)
 
-            addAll(lookingAtLinks, walkableLinks.map(v => v.link));
-            let addedBuff = false, leftBuf = '';
+            lookingAtLinks.addAll(walkableLinks.map(v => v.link));
+            let leftBuf = '';
             for (const v of walkableLinks) {
                 const nextWord = linking.wordsDict[v.word];
                 if(indices[v.word] <= v.ix) {
                     const buf = walk(nextWord, v.ix, depth+1);
 
-                    addedBuff = addedBuff || Boolean(buf);
-
                     leftBuf += buf;
                     indices[v.word]++;
                 }
             }
-            removeAll(lookingAtLinks, walkableLinks.map(v => v.link));
+            lookingAtLinks.removeAll(walkableLinks.map(v => v.link));
 
-            if(addedBuff && walkableLinks.find(v => indices[v.word] > v.ix+1 && !addedLinks.has(v.link))) {
-                log('!', letter.value);
+            if(leftBuf && walkableLinks.find(v => indices[v.word] > v.ix+1 && !addedLinks.has(v.link))) {
+                debug && log('!', letter.value);
                 leftBuf = letter.value + leftBuf;
             }
-
-            for(const v of letter.links) {
-                addedLinks.add(v)
-            }
+            addedLinks.addAll(letter.links);
 
             leftBuf += letter.value;
 
-            log('+', `${left} + ${leftBuf}`);
+            debug && log('+', `${left} + ${leftBuf}`);
             left += leftBuf;
 
-            if(indices[wordStr] === letter.index) {
-                indices[wordStr]++
+            if(indices[word] === letter.index) {
+                indices[word]++
             }
         }
 
-        log('<', left + ' ' + indices[wordStr] )
-        lookingAtWords.delete(word[0].word);
+        debug && log('<', left + ' ' + indices[word] )
+        lookingAtWords.delete(word);
         return left;
     }
 
@@ -249,10 +246,26 @@ function walkLinks(linking: Linking, debug = false) {
     return buffer;
 }
 
-function scs(words: string[], debug = false) {
+function scs(words: string[], options: {
+    debug?: boolean;
+    profile?: boolean;
+} = {}) {
+    options.profile && console.time('total');
+
+    options.profile && console.time('linking');
     const linking = new Linking(words);
+    options.profile && console.timeEnd('linking');
+
+    options.profile && console.time('scoring');
     scoreLinks(linking);
-    return walkLinks(linking, debug);
+    options.profile && console.timeEnd('scoring');
+
+    options.profile && console.time('walk');
+    const result = walkLinks(linking, options);
+    options.profile && console.timeEnd('walk');
+
+    options.profile && console.timeEnd('total');
+    return result;
 }
 
 function validate(value: string, words: string[]): {
@@ -273,6 +286,7 @@ function validate(value: string, words: string[]): {
 
             if(offset >= value.length && i + 1 < word.length) {
                 invalidWords.push(word);
+                break;
             }
         }
     }
@@ -282,21 +296,6 @@ function validate(value: string, words: string[]): {
         invalidWords,
     };
 }
-
-
-function addAll<T>(target: Set<T>, data: Iterable<T>) {
-    for (const v of data) {
-        target.add(v)
-    }
-}
-
-function removeAll<T>(target: Set<T>, data: Iterable<T>) {
-    for (const v of data) {
-        target.delete(v)
-    }
-}
-
-
 
 export {
     scs,
