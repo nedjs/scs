@@ -75,11 +75,8 @@ class Link {
 }
 
 class Linking {
-    links: CustomSet<Link> = new CustomSet();
     words: C[][] = [];
     wordsDict: Record<string, C[]> = {};
-    private charByLetter: Record<string, C[]> = {};
-    wordLinks: Record<string, Record<string, CustomSet<Link>>> = {}
 
     constructor(words: string[]) {
         for (const word of words) {
@@ -87,47 +84,21 @@ class Linking {
         }
     }
 
-    removeLink(link: Link) {
-        this.links.delete(link);
-        this.wordLinks[link.a.word][link.b.word].delete(link);
-        this.wordLinks[link.b.word][link.a.word].delete(link);
-        link.a.links.delete(link);
-        link.b.links.delete(link);
+    addLink(link: Link) {
+        link.a.links.add(link);
+        link.b.links.add(link);
     }
 
     addWord(word: string) {
         const buff = [new C(0, word)];
-        this.add(buff[0]);
+        // this.add(buff[0]);
         for (let i = 1; i < word.length; i++) {
             const c = new C(i, word);
             buff.push(c);
-            this.add(c);
+            // this.add(c);
         }
         this.words.push(buff);
         this.wordsDict[word] = buff;
-        this.wordLinks[word] = this.wordLinks[word] || {};
-    }
-
-    private add(a: C) {
-        this.charByLetter[a.value] = this.charByLetter[a.value] || [];
-        this.charByLetter[a.value].push(a);
-
-        for (const b of this.charByLetter[a.value]) {
-            if (b.word === a.word) continue;
-
-            const link = new Link(a, b);
-
-            this.links.add(link);
-
-            this.wordLinks[a.word] = this.wordLinks[a.word] || {};
-            this.wordLinks[a.word][b.word] = this.wordLinks[a.word][b.word] || new CustomSet();
-            this.wordLinks[a.word][b.word].add(link)
-
-            this.wordLinks[b.word] = this.wordLinks[b.word] || {};
-            this.wordLinks[b.word][a.word] = this.wordLinks[b.word][a.word] || new CustomSet();
-            this.wordLinks[b.word][a.word].add(link)
-        }
-
     }
 }
 
@@ -136,10 +107,9 @@ function findBestLinkSet(linking: Linking) {
     const words = linking.words
     for(let i=0;i<words.length;i++) {
         for(let j=i+1;j<words.length;j++) {
-            let wordA = words[i], wordB = words[j];
-            const links = scsWalk(wordA[0].word, wordB[0].word, linking);
-            if(links != null) {
-                final.addAll(links);
+            let wordA = words[i][0].word, wordB = words[j][0].word;
+            if(wordA !== wordB) {
+                scsWalk(wordA, wordB, linking);
             }
         }
     }
@@ -148,13 +118,7 @@ function findBestLinkSet(linking: Linking) {
 
 
 function scoreLinks(linking: Linking) {
-    const bestLinks = findBestLinkSet(linking)
-    for(let link of linking.links) {
-        if(!bestLinks.has(link)) {
-            linking.removeLink(link);
-        }
-    }
-
+    findBestLinkSet(linking);
     return void 0;
 }
 
@@ -301,8 +265,6 @@ function scsWalk(str1: string, str2: string, linking: Linking) {
         }
     }
 
-    const usedLinks = new CustomSet<Link>();
-    const relevantLinks = linking.wordLinks[str1][str2] || [];
     let result = "";
     x = 0;
     y = 0;
@@ -310,18 +272,13 @@ function scsWalk(str1: string, str2: string, linking: Linking) {
         while (x < n && str1[x] !== c) result += str1[x++];
         while (y < m && str2[y] !== c) result += str2[y++];
 
-        const linkFound = relevantLinks.find(v =>
-            v.sideForWord(str1).index === x &&
-            v.sideForWord(str2).index === y
-        );
-        if(linkFound) {
-            usedLinks.add(linkFound);
-        }
+
+        linking.addLink(new Link(linking.wordsDict[str1][x], linking.wordsDict[str2][y]))
+
         result += c;
         x++;
         y++;
     }
-    return usedLinks;
 }
 
 function scsSingle(str1: string, str2: string) {
