@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/node20/tsconfig.json",
   "compilerOptions": {
+    "module": "ES6",
     "allowImportingTsExtensions": true,
     "lib": ["esnext", "DOM"],
     "noImplicitAny": false

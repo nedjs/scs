@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --test tests.ts"
+    "test": "node --test src/scs.test.ts",
+    "build": "npm run build-browser && npm run build-node",
+    "build-browser": "esbuild src/browser.ts --bundle --platform=browser --target=node20 --outfile=dist/scs_browser.js",
+    "build-node": "esbuild src/scs.ts --bundle --platform=node --target=node20 --outfile=dist/scs.js"
+  },
+  "engines": {
+    "node": ">=23.0.0"
   },
   "repository": {
     "type": "git",
@@ -20,6 +26,7 @@
   "devDependencies": {
     "@tsconfig/node20": "^20.1.5",
     "@types/node": "^22.14.0",
+    "esbuild": "0.25.2",
     "typescript": "^5.8.3"
   }
 }
