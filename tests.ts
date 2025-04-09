@@ -26,7 +26,7 @@ test('SO cases', () => {
 test('permutations', () => {
     // this test is kinda jank but it is helpful for dev
 
-    for(let i = 0; i < 10000; i++) {
+    for(let i = 0; i < 50000; i++) {
         const words = shuffle(["maven","hold","moon","mark","jack","spark","poor","apple","solid","live"]);
         const result = validatedScs(words);
         if(result.length !== 19) {

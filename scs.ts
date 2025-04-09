@@ -190,17 +190,14 @@ function walkLinks(linking: Linking, debug = false) {
                     word: v.opposingWord(wordStr),
                     ix: v.sideForWord(v.opposingWord(wordStr)).index,
                 }))
-                .filter(v => !lookingAtLinks.has(v.link))
-                .filter(v => {
-                    return ![...lookingAtLinks].find(l =>
+                .filter(v => ![...lookingAtLinks].find(l =>
                         (v.word === l.a.word || v.word === l.b.word) && l.indexRel(v.word) < indices[v.word]
-                    );
-                })
+                ))
                 .filter(v => !lookingAtWords.has(v.word))
-                .filter((v, i, a) => {
-                    // cant have 2 links to the same word
-                    return a.findIndex(v2 => v.word === v2.word) === i;
-                })
+                // cant have 2 links to the same word
+                .filter((v, i, a) =>
+                    a.findIndex(v2 => v.word === v2.word) === i
+                )
 
             addAll(lookingAtLinks, walkableLinks.map(v => v.link));
             let addedBuff = false, leftBuf = '';
