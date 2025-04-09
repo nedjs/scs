@@ -5,7 +5,7 @@ class C {
     readonly index: number;
     readonly word: string;
     readonly value: string;
-    readonly links: CustomSet<Link> = new CustomSet();
+    readonly links: Array<Link> = [];
 
     constructor(index: number, word: string) {
         this.index = index;
@@ -34,8 +34,8 @@ class Link {
         }
         this.a = a;
         this.b = b;
-        this.a.links.add(this);
-        this.b.links.add(this);
+        this.a.links.push(this);
+        this.b.links.push(this);
     }
 
     isForWord(word: string) {
@@ -77,11 +77,6 @@ class Linking {
         for (const word of words) {
             this.addWord(word);
         }
-    }
-
-    addLink(link: Link) {
-        link.a.links.add(link);
-        link.b.links.add(link);
     }
 
     addWord(word: string) {
@@ -157,7 +152,9 @@ function walkLinks(linking: Linking, options: {
                     !lookingAtLinks.find(l => l.isForWord(v.word) && l.indexRel(v.word) < indices[v.word])
                 )
 
-            lookingAtLinks.addAll(walkableLinks.map(v => v.link));
+            for(const v of walkableLinks) {
+                lookingAtLinks.add(v.link);
+            }
             let leftBuf = '';
             for (const v of walkableLinks) {
                 const nextWord = linking.wordsDict[v.word];
@@ -168,7 +165,9 @@ function walkLinks(linking: Linking, options: {
                     indices[v.word]++;
                 }
             }
-            lookingAtLinks.deleteAll(walkableLinks.map(v => v.link));
+            for(const v of walkableLinks) {
+                lookingAtLinks.delete(v.link);
+            }
 
             if(leftBuf && walkableLinks.find(v => indices[v.word] > v.ix+1)) {
                 debug && log('!', letter.value);
@@ -270,7 +269,7 @@ function createLinksForLCS(str1: string, str2: string, linking: Linking) {
         while (x < n && str1[x] !== c) x++;
         while (y < m && str2[y] !== c) y++;
 
-        linking.addLink(new Link(linking.wordsDict[str1][x], linking.wordsDict[str2][y]));
+        new Link(linking.wordsDict[str1][x], linking.wordsDict[str2][y]);
         x++;
         y++;
     }
