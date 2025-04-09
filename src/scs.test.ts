@@ -1,8 +1,9 @@
-import {scs, scsLcsMethod, validate} from "./scs.ts";
+import {scs, validate} from "./scs.ts";
 import { test, describe } from "node:test";
 import assert from 'node:assert/strict';
 import {randomWord, shuffle} from "./util/util.ts";
 import {Radix} from "./util/Radix.ts";
+import {scsLcsMethod} from "./lcs.ts";
 
 test('profiling', () => {
     validatedScs(["jack", "apple", "maven", "hold", "solid", "mark", "moon", "poor", "spark", "live"], {

@@ -5,21 +5,31 @@ async function buildVariants(options) {
         esbuild.build({
             bundle: true,
             platform: 'node',
-            target: 'node20',
+            target: 'es6',
             sourcemap: true,
+            treeShaking: true,
             ...options,
             outfile: __dirname + '/dist/'+options.outfile+'.js',
+            dropLabels: [
+                'DEBUG'
+            ],
         }),
         esbuild.build({
             bundle: true,
             platform: 'browser',
-            target: 'node20',
+            target: 'es2020',
             sourcemap: true,
             minify: true,
+            treeShaking: true,
             ...options,
             outfile: __dirname + '/dist/'+options.outfile+'.min.js',
+            dropLabels: [
+                'DEBUG'
+            ],
         }),
-    ]);
+    ]).then((results) => {
+        console.log('Build ' + options.entryPoints + ' done');
+    });
 }
 
 (async () => {
@@ -28,6 +38,7 @@ async function buildVariants(options) {
         bundle: true,
         platform: 'node',
         target: 'node20',
+        format: 'esm',
         sourcemap: true,
         outfile: 'scs',
     })
@@ -36,6 +47,7 @@ async function buildVariants(options) {
         bundle: true,
         platform: 'browser',
         target: 'node20',
+        format: 'iife',
         sourcemap: true,
         outfile: 'scs-browser',
     })

@@ -1,5 +1,4 @@
-import {CustomSet} from "./util/CustomSet.ts";
-import {DEBUG} from "./constants.ts";
+import {prepareLCS} from "./lcs.ts";
 
 class C {
     readonly index: number;
@@ -27,7 +26,7 @@ class Link {
             throw new Error(`Invalid link between same word ${a.word}`);
         }
         // only used in debugging
-        if(DEBUG) {
+        DEBUG: {
             // this style of ID is very nice for debugging
             this.d_id = `${Link.idCounter++}/${a.index}-${b.index}`;
             this.d_l = a.value;
@@ -51,14 +50,6 @@ class Link {
         return -1;
     }
 
-    opposingWord(word: string) {
-        if (this.a.word === word) {
-            return this.b.word;
-        } else if (this.b.word === word) {
-            return this.a.word;
-        }
-        return '';
-    }
     opposingSide(word: string) {
         if (this.a.word === word) {
             return this.b;
@@ -79,7 +70,11 @@ class Linking {
             return false;
         }
 
-        const buff = word.split('').map((v, i) => new C(i, word))
+        const buff: C[] = [];
+        for(let i = 0; i < word.length; i++) {
+            buff.push(new C(i, word));
+        }
+
         this.wordsDict[word] = buff;
 
         for(let existingWord of this.words) {
@@ -107,24 +102,28 @@ function walkLinks(linking: Linking, options: {
     let {debug} = options;
 
     const indices = {};
-    const lookingAtLinks = new CustomSet<Link>();
-    const lookingAtWords = new CustomSet<string>();
+    const lookingAtLinks = new Set<Link>();
+    const lookingAtWords = new Set<string>();
 
     const walk = (letters: C[], toIndex: number, depth = 0) => {
         const word = letters[0].word;
 
-        const log = (symbol: string, ...args: any[]) => {
-            console.log(Array(depth).fill('|  ').join('')+symbol, ...args);
+
+        let log: (symbol: string, ...args: any[]) => any;
+        DEBUG: {
+            log = (symbol: string, ...args: any[]) => {
+                console.log(Array(depth).fill('|  ').join('')+symbol, ...args);
+            }
         }
 
         // already set to process this letter, skip its value
         if(toIndex === indices[word]) {
-            debug && log('/', word, 'to', (letters[toIndex]?.value || '+'), indices[word], '-', toIndex)
+            DEBUG: debug && log('/', word, 'to', (letters[toIndex]?.value || '+'), indices[word], '-', toIndex)
             return '';
         }
 
-        debug && log('>', word, 'to', (letters[toIndex]?.value || 'END'), indices[word], '-', toIndex)
-        debug && log('i', Object.entries(indices).map(v => `${v[0]}:${v[1]}`).join(', '));
+        DEBUG: debug && log('>', word, 'to', (letters[toIndex]?.value || 'END'), indices[word], '-', toIndex)
+        DEBUG: debug && log('i', Object.entries(indices).map(v => `${v[0]}:${v[1]}`).join(', '));
 
         lookingAtWords.add(word);
 
@@ -143,7 +142,7 @@ function walkLinks(linking: Linking, options: {
                     !lookingAtWords.has(v.char.word) &&
                     // don't allow us to use a link already being processed in the calls stack, UNLESS the index we want
                     // is smaller than the index we are at for that word.
-                    !lookingAtLinks.find(l => l.isForWord(v.char.word) && l.indexRel(v.char.word) < indices[v.char.word])
+                    !lookingAtLinks.values().find(l => l.isForWord(v.char.word) && l.indexRel(v.char.word) < indices[v.char.word])
                 )
 
             for(const v of walkableLinks) {
@@ -167,12 +166,12 @@ function walkLinks(linking: Linking, options: {
             // check if our buffer passed our character on this word, if it did we need to prepend the char to the leftBuf
             // In this case the letter is going to be duplicated
             if(leftBuf && walkableLinks.find(v => indices[v.char.word] > v.char.index+1)) {
-                debug && log('!', letter.value);
+                DEBUG: debug && log('!', letter.value);
                 leftBuf = letter.value + leftBuf;
             }
             leftBuf += letter.value;
 
-            debug && log('+', `${left} + ${leftBuf}`);
+            DEBUG: debug && log('+', `${left} + ${leftBuf}`);
             // this character is now processed, we can move to the next one
             left += leftBuf;
 
@@ -183,7 +182,7 @@ function walkLinks(linking: Linking, options: {
             }
         }
 
-        debug && log('<', left + ' ' + indices[word] )
+        DEBUG: debug && log('<', left + ' ' + indices[word] )
         lookingAtWords.delete(word);
         return left;
     }
@@ -219,48 +218,12 @@ function scs(words: string[], options: {
 }
 
 
-function prepareLCS(str1: string, str2: string) {
-    let n = str1.length, m = str2.length;
-    let dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
-
-    for (let i = n - 1; i >= 0; i--) {
-        for (let j = m - 1; j >= 0; j--) {
-            if (str1[i] === str2[j]) {
-                dp[i][j] = 1 + dp[i + 1][j + 1];
-            } else {
-                dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
-            }
-        }
-    }
-
-    let x = 0, y = 0;
-    let lcs = "";
-    while (x < n && y < m) {
-        if (str1[x] === str2[y]) {
-            lcs += str1[x];
-            x++;
-            y++;
-        } else if (dp[x + 1][y] >= dp[x][y + 1]) {
-            x++;
-        } else {
-            y++;
-        }
-    }
-
-    return {
-        lcs,
-        n,
-        m,
-    }
-}
-
 /**
  * walks the longest common supersequence of two strings and creates links between the letters, putting them into linking
  */
 function createLinksForLCS(str1: string, str2: string, linking: Linking) {
     const {lcs, n, m} = prepareLCS(str1, str2);
-    let x = 0;
-    let y = 0;
+    let x = 0, y = 0;
     for (let c of lcs) {
         while (x < n && str1[x] !== c) x++;
         while (y < m && str2[y] !== c) y++;
@@ -271,27 +234,6 @@ function createLinksForLCS(str1: string, str2: string, linking: Linking) {
     }
 }
 
-/**
- * Finds the shortest common supersequence of two strings. This is a known method of doing it
- * for 2 strings, used for validating results from the generic scs case.
- */
-function scsLcsMethod(str1: string, str2: string) {
-    const {lcs, n, m} = prepareLCS(str1, str2);
-    let result = "";
-    let x = 0;
-    let y = 0;
-    for (let c of lcs) {
-        while (x < n && str1[x] !== c) result += str1[x++];
-        while (y < m && str2[y] !== c) result += str2[y++];
-
-        result += c;
-        x++;
-        y++;
-    }
-
-    result += str1.slice(x) + str2.slice(y);
-    return result;
-}
 
 /**
  * Validates a string against a list of words. It checks if the value is a valid SCS for the words
@@ -330,6 +272,5 @@ export {
     scs,
     createLinks,
     walkLinks,
-    scsLcsMethod,
     validate,
 }
