@@ -145,6 +145,10 @@ describe('ab tests', () => {
 });
 
 
+/**
+ * I wanted to test all valid combinations of N words. This test will fail and spit
+ * out tests for all the invalid combinations. I can then copy/paste them into the test suite
+ */
 test('generate new ab tests', () => {
     const radix = new Radix("abcd");
     const length = 4;
@@ -155,7 +159,6 @@ test('generate new ab tests', () => {
         const scsv = validatedScs([a, b]);
         const scss = scsSingle(a, b);
 
-        // assertScsWithExample([vA, vB], scss)
         if(scsv.length !== scss.length) {
             console.log(`test('${a}-${b}', () => { assertScsWithExample(["${a}", "${b}"], "${scss}") });`);
             foundTestCase = true;

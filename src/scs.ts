@@ -109,7 +109,7 @@ function findBestLinkSet(linking: Linking) {
         for(let j=i+1;j<words.length;j++) {
             let wordA = words[i][0].word, wordB = words[j][0].word;
             if(wordA !== wordB) {
-                scsWalk(wordA, wordB, linking);
+                scsSingle(wordA, wordB, linking);
             }
         }
     }
@@ -127,8 +127,6 @@ function walkLinks(linking: Linking, options: {
     profile?: boolean;
 }) {
     let {debug} = options;
-
-    debug = debug && DEBUG;
 
     const indices = {};
     const lookingAtLinks = new CustomSet<Link>();
@@ -236,7 +234,13 @@ function scs(words: string[], options: {
     return result;
 }
 
-function scsWalk(str1: string, str2: string, linking: Linking) {
+/**
+ * Finds the shortest common superstring of two strings. This is a known method of doing it
+ * for 2 strings, used for validating results from the generic scs case.
+ *
+ * If linking is provided it will add a link when a common letter is added to the result.
+ */
+function scsSingle(str1: string, str2: string, linking?: Linking) {
 
     let n = str1.length, m = str2.length;
     let dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
@@ -272,50 +276,10 @@ function scsWalk(str1: string, str2: string, linking: Linking) {
         while (x < n && str1[x] !== c) result += str1[x++];
         while (y < m && str2[y] !== c) result += str2[y++];
 
-
-        linking.addLink(new Link(linking.wordsDict[str1][x], linking.wordsDict[str2][y]))
-
-        result += c;
-        x++;
-        y++;
-    }
-}
-
-function scsSingle(str1: string, str2: string) {
-
-    let n = str1.length, m = str2.length;
-    let dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
-
-    for (let i = n - 1; i >= 0; i--) {
-        for (let j = m - 1; j >= 0; j--) {
-            if (str1[i] === str2[j]) {
-                dp[i][j] = 1 + dp[i + 1][j + 1];
-            } else {
-                dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
-            }
+        if(linking) {
+            linking.addLink(new Link(linking.wordsDict[str1][x], linking.wordsDict[str2][y]))
         }
-    }
 
-    let x = 0, y = 0;
-    let lcs = "";
-    while (x < n && y < m) {
-        if (str1[x] === str2[y]) {
-            lcs += str1[x];
-            x++;
-            y++;
-        } else if (dp[x + 1][y] >= dp[x][y + 1]) {
-            x++;
-        } else {
-            y++;
-        }
-    }
-
-    let result = "";
-    x = 0;
-    y = 0;
-    for (let c of lcs) {
-        while (x < n && str1[x] !== c) result += str1[x++];
-        while (y < m && str2[y] !== c) result += str2[y++];
         result += c;
         x++;
         y++;
@@ -325,6 +289,9 @@ function scsSingle(str1: string, str2: string) {
     return result;
 }
 
+/**
+ * Validates a string against a list of words. It checks if the value is a valid SCS for the words
+ */
 function validate(value: string, words: string[]): {
     valid: boolean;
     invalidWords: string[];
